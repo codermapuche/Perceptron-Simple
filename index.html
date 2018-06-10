@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Perceptron TP2 - 123105</title>
+    <style>
+      * {
+          box-sizing: border-box;
+      }
+
+      body {
+          font-family: sans-serif;
+          margin: 0;
+          padding: 0;
+      }
+      article {
+          text-align: left;
+          border-top: .1em solid #eee;
+          margin: 2em 0;
+      }
+      
+      h5 {
+        margin-top: 1em;
+        line-height: 2em;
+      }
+      
+      p {
+        margin: .5em;
+        line-height: 1.5em;        
+      }
+      .scene {
+          width: 200px;
+          height: 200px;
+          margin: 0 auto;
+          perspective: 400px;
+      }
+
+      .cube {
+          width: 200px;
+          height: 200px;
+          position: relative;
+          transform-style: preserve-3d;
+          transform: translateZ(-100px);
+          transition: transform 1s;
+      }
+
+      .cube tr:nth-child(1) td:nth-child(1) {
+          border-width: 2px 0 0 2px;
+          border-style: solid;
+      }
+
+      .cube tr:nth-child(1) td:nth-child(2) {
+          border-width: 2px 2px 0 0;
+      }
+
+      .cube tr:nth-child(2) td:nth-child(1) {
+          border-width: 0 0 2px 2px;
+      }
+
+      .cube tr:nth-child(2) td:nth-child(2) {
+          border-width: 0 2px 2px 0;
+      }
+
+      input[type="radio"] {
+          display: none;
+      }
+
+      #front:checked ~ .scene > div {
+          transform: translateZ(-100px) rotateY( 0deg);
+      }
+
+      #right:checked ~ .scene > div {
+          transform: translateZ(-100px) rotateY( -90deg);
+      }
+
+      #back:checked ~ .scene > div {
+          transform: translateZ(-100px) rotateY(-180deg);
+      }
+
+      #left:checked ~ .scene > div {
+          transform: translateZ(-100px) rotateY( 90deg);
+      }
+
+      #top:checked ~ .scene > div {
+          transform: translateZ(-100px) rotateX( -90deg);
+      }
+
+      #bottom:checked ~ .scene > div {
+          transform: translateZ(-100px) rotateX( 90deg);
+      }
+
+      .cube > div {
+          position: absolute;
+          width: 200px;
+          height: 200px;
+          font-size: 40px;
+          font-weight: bold;
+          color: white;
+          text-align: center;
+          overflow: hidden;
+          box-sizing: content-box;
+      }
+
+      .cube > div table {
+          position: relative;
+          width: 100%;
+          overflow: hidden;
+          border-collapse: collapse;
+          border: none;
+      }
+
+      .cube > div table td {
+          max-height: 100px;
+          height: 100px;
+          max-width: 100px;
+          width: 100px;
+          font-size: 20px;
+          vertical-align: middle;
+          background: rgba(232, 65, 24, 0.7);
+          border-color: #c23616;
+          border-style: solid;
+      }
+
+      .cube > div table td.active {
+          background: rgba(76, 209, 55, 0.7);
+          border-color: #44bd32;
+      }
+
+      .cube > div:nth-child(1) {
+          transform: rotateY( 0deg) translateZ(100px);
+      }
+
+      .cube > div:nth-child(2) {
+          transform: rotateY( 90deg) translateZ(100px);
+      }
+
+      .cube > div:nth-child(3) {
+          transform: rotateY(180deg) translateZ(100px);
+      }
+
+      .cube > div:nth-child(4){
+          transform: rotateY(-90deg) translateZ(100px);
+      }
+
+      .cube > div:nth-child(5) {
+          transform: rotateX( 90deg) translateZ(100px);
+      }
+
+      .cube > div:nth-child(6) {
+          transform: rotateX(-90deg) translateZ(100px);
+      }
+
+      label {
+          padding: 1em 2em;
+          background: #fafafa;
+          border: .1em solid #eee;
+          text-transform: uppercase;
+          cursor: pointer;
+          display: inline-block;
+      }
+
+      .graphic {
+          width: 1000px;
+          text-align: center;
+          background: #fafafa;
+          padding: 2em;
+          margin: 0 auto;
+      }
+
+      .graphic > nav {
+          display: block;
+          margin-bottom: 2em;
+      }
+      .graphic > header {
+          display: flex;
+          margin-bottom: 2em;
+          background: #353b48;
+          padding: 1em;
+      }
+      .graphic > header input {
+          display: block;
+          line-height: 2em;
+          font-size: 1.5em;
+          border: none;
+          padding: 0 1em;
+          text-align: center;
+          color: #2f3640;
+          flex: 1;
+          margin-right: 2em;
+          flex-basis: 750px;
+      }
+      .graphic > header button {
+          display: block;
+          line-height: 2em;
+          flex: 1;
+          background: #f5f6fa;
+          flex-basis: 250px;
+          font-size: 1.5em;
+          text-transform: uppercase;
+          border: none;
+          cursor: pointer;
+          color: #2f3640;
+      }
+    </style>
+  </head>
+  <body>    
+    <section class="graphic">
+    
+      <input type="radio" name="nav" id="front" checked>
+      <input type="radio" name="nav" id="right">
+      <input type="radio" name="nav" id="back">
+      <input type="radio" name="nav" id="left">
+      <input type="radio" name="nav" id="top">
+      <input type="radio" name="nav" id="bottom">
+      
+      <header>
+        <input type="text" name="formula" value="x && y && z" placeholder="x && y && z">
+        <button onclick="train(document.querySelector('header > input').value)">Aprender</button>
+      </header>
+      
+      <article id="output"></article>
+      
+      <nav>
+        <label for="front">Frente</label>
+        <label for="right">Derecha</label>
+        <label for="back">Atras</label>
+        <label for="left">Izquierda</label>
+        <label for="top">Superior</label>
+        <label for="bottom">Inferior</label>
+      </nav>
+      
+      <div class="scene">
+        
+        <div class="cube">
+          <div>
+            <table>
+              <tr><td class="v010">X=0<br>Y=1<br>Z=0</td><td class="v110">X=1<br>Y=1<br>Z=0</td></tr>
+              <tr><td class="v000">X=0<br>Y=0<br>Z=0</td><td class="v100">X=1<br>Y=0<br>Z=0</td></tr>
+            </table>
+          </div>
+          <div>
+            <table>
+              <tr><td class="v110">X=1<br>Y=1<br>Z=0</td><td class="v111">X=1<br>Y=1<br>Z=1</td></tr>
+              <tr><td class="v100">X=1<br>Y=0<br>Z=0</td><td class="v101">X=1<br>Y=0<br>Z=1</td></tr>
+            </table>       
+          </div>
+          <div>
+            <table>
+              <tr><td class="v111">X=1<br>Y=1<br>Z=1</td><td class="v011">X=0<br>Y=1<br>Z=1</td></tr>
+              <tr><td class="v101">X=1<br>Y=0<br>Z=1</td><td class="v001">X=0<br>Y=0<br>Z=1</td></tr>
+            </table>          
+          </div>
+          <div>
+            <table>
+              <tr><td class="v011">X=0<br>Y=1<br>Z=1</td><td class="v010">X=0<br>Y=1<br>Z=0</td></tr>
+              <tr><td class="v001">X=0<br>Y=0<br>Z=1</td><td class="v000">X=0<br>Y=0<br>Z=0</td></tr>
+            </table>   
+          </div>
+          <div>
+            <table>
+              <tr><td class="v011">X=0<br>Y=1<br>Z=1</td><td class="v111">X=1<br>Y=1<br>Z=1</td></tr>
+              <tr><td class="v010">X=0<br>Y=1<br>Z=0</td><td class="v110">X=1<br>Y=1<br>Z=0</td></tr>
+            </table>   
+          </div>
+          <div>
+            <table>
+              <tr><td class="v000">X=0<br>Y=0<br>Z=0</td><td class="v100">X=1<br>Y=0<br>Z=0</td></tr>
+              <tr><td class="v001">X=0<br>Y=0<br>Z=1</td><td class="v101">X=1<br>Y=0<br>Z=1</td></tr>
+            </table>   
+          </div>
+        </div>
+        
+      </div>
+      
+      <article>
+        <h5>Codificacion:</h5>
+        <p>
+          A la hora de codificar el presente algoritmo, se utilizo Javascript con la finalidad de que el mismo pueda publicarse eventualmente en cualquier sitio web a modo demostrativo. La formula logica que debe aprender el perceptron se parametriza de modo que puedan probarse distintas formulas sin inconvenientes.
+        </p>
+        <p>
+          Se programado un Perceptron siple, con 3 metodos:
+        </p>
+        <ul>
+          <li><strong>Train: </strong> Este metodo recibe como primer parametro las entradas del Perceptron en forma de Array y como segundo parametro la salida esperada. Internamente, el perceptron genera un peso aleatorio para cada entrada y almacena los datos de entrenamiento recibidos.</li>
+          <li><strong>Perceive: </strong> Este metodo recibe un unico parametro que son las entradas del Perceptron, devuelve como salida el resultado (1 o 0) de la activacion del perceptron.</li>
+          <li><strong>Retrain: </strong> Este metodo revisa para cada conjunto de entradas en el set de entrenamiento, que el Perceptron sea capaz de percibir la salida adecuada, si no es asi, utiliza un algoritmo de aprendizaje supervisado para recalcular los pesos. Si todas las entradas producen la salida correcta, devuelve True, de lo contrario devuelve False.</li>
+        </ul>
+        <p>
+          El Perceptron solo tiene dos valores predefinidos, un threshold = 0.5 y el learnrate = 0.1; No obstante, el peso del threshold (bias) es inicializado aleatoriamente y ajustado en base a una funcion sigma igual que los pesos de las entradas. La formula de ajuste de pesos es de manual: <strong>weight += (expected - result) * learnrate * input</strong> 
+        </p>
+        <h5>Entrenamiento:</h5>
+        <p>
+          Para la fase de entrenamiento, se analizan todas las combinaciones posibles de X, Y y Z y se calcula para cada una de ellas, la salida de la formula proporcionada, acto seguido, se entrena al perceptron con el resultado obtenido.<br>Luego de entrenar todas las combinaciones posibles, se procede a verificar que el perceptron sea capaz de retener la informacion, esto se hace llamando al metodo <strong>Perceive</strong> una cantidad maxima de 1 millon de veces, si pasado esa cantidad de intentos el perceptron no es capaz de retener la informacion, posiblemente se trate de una funcion que no es linealmente separable.
+        </p>
+        <h5>Evaluacion:</h5>
+        <p>
+          Para la fase de evaluacion, se le pide al perceptron que indique para cada una de las combinaciones de inputs posibles, que indique cual es su salida aprendida, esta salida se grafica en cubo de 2x2x2 tridimensional, las caras en color verde son aquellas que activan al perceptron y aquellas en rojo las que no lo hacen.
+        </p>
+      </article>
+      
+    </section>
+    
+    
+    <script> 
+      function Perceptron() {
+
+        var weights = [],
+            threshold = 0.5,
+            learnrate = 0.1,
+            data = [];
+          
+        this.retrain = function retrain() {
+        
+          var success = true;
+          
+          for (var index=data.length; index > 0; index--) {
+            var training = data.shift();
+            success = this.train(training.input, training.target) && success;
+          }
+          
+          return success;
+          
+        }
+        
+        this.train = function train(inputs, expected) {
+        
+          while (weights.length <= inputs.length) {
+            weights.push(Math.random());
+          }
+
+          var result = this.perceive(inputs);
+          data.push({ input: inputs, target: expected });
+
+          if (result == expected) {
+            return true
+          }
+          
+          for(var index=0; index < weights.length; index++) {
+            var input = (index == inputs.length) ? threshold : inputs[index];                
+            weights[index] += (expected - result) * learnrate * input;
+          }
+          
+          return false;
+          
+        }
+
+        this.perceive = function perceive(inputs) {
+        
+          var result = 0;
+          
+          for(var i=0; i<inputs.length; i++) {
+            result += inputs[i] * weights[i];
+          }
+          
+          result += threshold * weights[weights.length - 1];
+
+          return Number( ( 1 / ( 1 + Math.pow(Math.E, -result) ) ) >= threshold);
+          
+        }
+        
+      }
+    </script>
+    
+    <script>
+      function train(calc) {         
+
+        function result(x, y, z) {
+          return eval(calc);
+        }
+      
+        var fnc = new Perceptron();
+        
+        var actives = document.querySelectorAll('.cube .active');
+        for (var idx = 0; idx < actives.length; idx++) {
+          actives[idx].classList.remove('active');
+        }
+
+        for (var x = 0; x < 2; x++) {      
+          for (var y = 0; y < 2; y++) {  
+            for (var z = 0; z < 2; z++) {
+              fnc.train([x, y, z], result(x, y, z) ? 1 : 0);            
+            }
+          }
+        }
+
+        // Aprender
+        var nro = 0;
+        while ( !fnc.retrain() && ++nro < 1000000);
+        
+        if ( !fnc.retrain() ) {
+          
+          alert('No se pudo aprender la formula ni en un millon de intentos! Seguro que es linealmente separable?');
+          return;
+          
+        }
+        
+        for (var x = 0; x < 2; x++) {      
+          for (var y = 0; y < 2; y++) {  
+            for (var z = 0; z < 2; z++) {
+              actives = document.querySelectorAll('.v' + x.toString() + y.toString() + z.toString());
+              for (var idx = 0; idx < actives.length; idx++) {
+                if (fnc.perceive([x, y, z]) == 1) {
+                  actives[idx].classList.add('active');
+                }
+              }         
+            }
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
